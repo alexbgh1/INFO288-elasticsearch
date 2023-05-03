@@ -21,7 +21,9 @@ xpack.security.enabled: false
 
 ## Dejamos activo el servicio de elasticsearch
 
-Esto se ejecuta situados en la carpeta de elasticsearch ej: **elasticsearch-8.7.0**
+**DEFAULT PORT: 9200**
+
+**PATH: elasticsearch-8.7.0**
 
 ```bash
 ./bin/elasticsearch
