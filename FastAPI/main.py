@@ -7,7 +7,21 @@ from datetime import datetime
 import os
 import glob
 
+##db conexion
+import mysql.connector
+
+
+conexion = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    password="123456",
+    database="dbsd"
+)
+cursor = conexion.cursor()
+
+#
 app = FastAPI()
+
 es = Elasticsearch("http://localhost:9200")
 DB_NAME = 'db_scrapper'
 
@@ -140,3 +154,14 @@ def search_root(q: str = Query(None, min_length=3, max_length=50)):
     except Exception as e:
         print('Error: ', e)
         return { 'success': False, 'message': 'Something went wrong. Try adding a query ex: <search?q=audifonos>' }
+
+
+@app.post("/api/link/")
+async def get_link(link: str):
+    hora_desc = "17:00:00"
+    path = "/../data"
+    query_db = "INSERT INTO documentos (link, hora_desc, path) VALUES (%s, %s, %s)"
+    values_db = (link, hora_desc, path)
+    cursor.execute(query_db, values_db)
+    conexion.commit()
+    return {"link_received": link}
