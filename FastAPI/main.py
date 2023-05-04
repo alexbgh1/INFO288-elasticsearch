@@ -33,8 +33,8 @@ def create_index():
 def refresh_indexes():
     # Here we need to read /data/ folder, find .html files and create the indexes
     directory = "data"
-    html_files = glob.glob(os.path.join(directory, "*.html")) # ···> Lista de archivos html [ 'falabella.html', 'ripley.html']
-
+    html_files = glob.glob(os.path.join(directory, "*.txt")) # ···> Lista de archivos html [ 'falabella.html', 'ripley.html']
+    print(html_files)
     # If file (from html_files) is not in the index, then create it
 
     # We need to create a response to know if all files were created or are already in the index
@@ -46,14 +46,17 @@ def refresh_indexes():
     try:
         # For each file in html_files [ 'falabella.html', 'ripley.html']
         for file in html_files:
-            file_name = file.split('/')[1].split('.')[0] # ···> falabella | ripley
-
+            
+            print("sexooo",file)
+            file_name = file.split('\\')[1].split('.txt')[0] # ···> falabella | ripley
+            print("sexooo2",file)
             try:
+
                 es.get(index=DB_NAME, id=file_name)
                 response['already_exists'].append({'file_name':file_name})
-
+                
             except:
-                with open(file, 'r') as f:
+                with open(file, 'r', encoding='utf-8')  as f:
                     file_content = f.read()
                     es.index(index='db_scrapper', id=file_name, document={
                         'title': file_name,
@@ -84,6 +87,15 @@ def create_root():
 @app.get("/api/elasticsearch/refresh")
 def refresh_root():
     return refresh_indexes()
+@app.get("/api/delete")
+def delete():
+    # Crea una instancia de Elasticsearch
+    es = Elasticsearch()
+
+    # Envía una solicitud DELETE para eliminar todos los índices
+    es.indices.delete(index="db_scrapper")
+    return { 'success': True, 'message': 'Se han eliminado los indices' }
+
 
 # /api/elasticsearch/search: Search in the elasticsearch indexes
 @app.get("/api/elasticsearch/search")
@@ -115,8 +127,15 @@ def search_root(q: str = Query(None, min_length=3, max_length=50)):
 
         # --- Searching in the index ---
         resp = es.search(index="db_scrapper", query=query, highlight=highlight)
+        finalResp = []
+        for hit in resp['hits']['hits']:
+            title = hit['_source']['title']
+            content = hit['_source']['content']
+            maintitle = title.split(".")[1]
+            temp = { 'maintitle': maintitle, 'link': title, 'content': content}
+            finalResp.append(temp)
         # Return full response
-        return { 'success': True, 'data': resp }
+        return { 'success': True, 'data': finalResp }
 
     except Exception as e:
         print('Error: ', e)
